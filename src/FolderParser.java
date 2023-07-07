@@ -7,7 +7,6 @@ public class FolderParser {
     public static Map<Integer, TransactionsInfo> parseCsvFile(String filePath) {
         BufferedReader bufferedReader = null;
         TransactionsInfo info;
-        List<String> columnsNames = new ArrayList<>();
         int rowIndex = 1;
         Map<Integer, TransactionsInfo> transactions = new HashMap<>();
 
@@ -18,35 +17,20 @@ public class FolderParser {
             while((line = bufferedReader.readLine()) != null) {
                 String[] row = line.split(",");
 
-                for(String s:row){
-                    System.out.println("Fiecare linie split: " + s);
-                }
-
                 if(line.startsWith("Sinteza")){
                     break;
                 }
 
-                if(rowIndex == 7) {
-                    for(String index : row) {
-                        if(index.startsWith("Nume contract")) {
-                            columnsNames.add(index);
-                        } else if(index.startsWith("Cantitate")) {
-                            columnsNames.add(index);
-                        } else if(index.startsWith("Pret")) {
-                            columnsNames.add(index);
-                        }
-                    }
-                } else if(rowIndex > 7) {
+                if(rowIndex > 7) {
                     for(int i = 0; i < row.length; i += 9) {
-                        String data = row[0];
-                        double quantity = Double.parseDouble(row[3]);
-                        double price = Double.parseDouble(row[4]);
+                        String data = row[i];
+                        double quantity = Double.parseDouble(row[i + 3]);
+                        double price = Double.parseDouble(row[i + 4]);
                         info = new TransactionsInfo(data, quantity, price);
                         transactions.put(rowIndex, info);
                     }
                 }
                 rowIndex++;
-                System.out.println();
             }
         } catch(IOException ioException) {
             ioException.printStackTrace();
@@ -58,6 +42,35 @@ public class FolderParser {
             }
         }
         return transactions;
+    }
+
+    public static void parseCsvFolder(String folderPath){
+        Map<Integer, TransactionsInfo> transactions;
+
+        try{
+            File sourceFolder = new File(folderPath);
+            String fileExt = "";
+
+            for(File sourceFile: Objects.requireNonNull(sourceFolder.listFiles())){
+                String fileName = sourceFile.getName();
+                System.out.println(fileName);
+                String filePath = folderPath + "\\" + fileName;
+
+                transactions = FolderParser.parseCsvFile(filePath);
+                fileExt = fileName.substring(fileName.lastIndexOf(".") + 1);
+
+                if(fileExt.equalsIgnoreCase("csv")){
+
+                    FolderParser.printTableFormat(transactions, filePath);
+
+                    //System.out.println("We have read " + fileName + " successfully");
+                }else{
+                    System.out.println("Filename extension not supported!");
+                }
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     public static void printTableFormat(Map<Integer, TransactionsInfo> transactions, String filePath){
